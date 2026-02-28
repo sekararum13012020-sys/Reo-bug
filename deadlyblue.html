@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DEADLY BLUE - MOTION</title>
+    <style>
+        :root { --blue: #3498db; }
+        * { box-sizing: border-box; cursor: crosshair; transition: 0.3s; }
+        body { background: #000; color: #fff; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; overflow: hidden; }
+        
+        /* BG MATRIX */
+        #matrix { position: fixed; top: 0; left: 0; z-index: -1; opacity: 0.2; }
+
+        .panel { width: 90%; max-width: 400px; text-align: center; z-index: 10; }
+        
+        .header h1 { font-size: 2.5rem; letter-spacing: 5px; margin: 0; font-weight: 900; text-transform: uppercase; }
+        .header h1 span { color: var(--blue); text-shadow: 0 0 15px var(--blue); }
+        .dev { color: #666; font-size: 0.8rem; margin-bottom: 20px; display: block; }
+
+        /* BANNER ANIME GERAK - FIX LINK */
+        .banner { width: 100%; height: 200px; border-radius: 20px; border: 1px solid var(--blue); overflow: hidden; box-shadow: 0 0 20px rgba(52, 152, 219, 0.4); margin-bottom: 25px; background: #111; }
+        .banner img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+        /* GLASS UI */
+        .glass-box { background: rgba(20, 20, 20, 0.9); border: 1px solid #333; border-radius: 25px; padding: 25px; text-align: left; border-bottom: 4px solid #111; }
+        label { font-size: 0.7rem; color: #fff; font-weight: bold; text-transform: uppercase; margin-bottom: 8px; display: block; }
+        
+        .input-box { width: 100%; background: #151515; border: 1.5px solid #222; border-radius: 12px; padding: 14px; color: #fff; margin-bottom: 20px; outline: none; }
+        .input-box:focus { border-color: var(--blue); }
+
+        .select-trigger { width: 100%; background: #d9d9d9; border-radius: 30px; padding: 14px 20px; color: #000; font-weight: bold; cursor: pointer; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+
+        .btn-send { width: 100%; background: #2c3e50; border: none; color: #fff; padding: 16px; border-radius: 30px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; box-shadow: 0 5px 0 #1a252f; cursor: pointer; }
+        .btn-send:active { transform: translateY(3px); box-shadow: none; }
+
+        /* OVERLAY MENU */
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; display: none; flex-direction: column; justify-content: center; align-items: center; }
+        .overlay-content { width: 85%; max-width: 350px; background: #1c1c1e; border-radius: 20px; border: 1px solid #333; overflow: hidden; }
+        .option { padding: 18px 25px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-family: 'Courier New', monospace; font-weight: bold; }
+        .option:hover { background: #2c2c2e; color: var(--blue); }
+        .option.active { color: var(--blue); }
+        .dot { width: 18px; height: 18px; border: 2px solid #555; border-radius: 50%; position: relative; }
+        .active .dot { border-color: var(--blue); }
+        .active .dot::after { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 10px; height: 10px; background: var(--blue); border-radius: 50%; }
+    </style>
+</head>
+<body>
+
+<canvas id="matrix"></canvas>
+
+<div class="panel">
+    <div class="header">
+        <h1>DEADLY <span>BLUE</span></h1>
+        <span class="dev">Developer @Archiveditzahayy</span>
+    </div>
+
+    <div class="banner">
+        <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJtYXVtMzR6N2p4Z3R4Z3R4Z3R4Z3R4Z3R4Z3R4Z3R4Z3ZSZW5kZXImZXA9djFfaW50ZXJuYWxfZ2lmX2J5X2lkJmN0PWc/3o7TKVUn7iM8FMEU24/giphy.gif" alt="Moving Anime">
+    </div>
+
+    <div class="glass-box">
+        <label>TARGET NUMBER</label>
+        <input type="text" class="input-box" id="num" placeholder="e.g. +628xxxxxxxxxx">
+
+        <label>SELECT BUG</label>
+        <div class="select-trigger" onclick="openM()">
+            <span id="bug_name">FORCE CLOSE WA</span>
+            <span>▼</span>
+        </div>
+
+        <button class="btn-send" onclick="hit()">SEND BUG</button>
+    </div>
+</div>
+
+<div class="overlay" id="ovl" onclick="closeM()">
+    <div class="overlay-content" onclick="event.stopPropagation()">
+        <div class="option" onclick="sel('DELAY HARD (VIRTEX)')">DELAY HARD (VIRTEX) <div class="dot"></div></div>
+        <div class="option" onclick="sel('DELAY MEDIUM')">DELAY MEDIUM <div class="dot"></div></div>
+        <div class="option" onclick="sel('DELAY EASY')">DELAY EASY <div class="dot"></div></div>
+        <div class="option" onclick="sel('BLANK WHITE STUCK')">BLANK WHITE STUCK <div class="dot"></div></div>
+        <div class="option" onclick="sel('STUCK LOGO BOOT')">STUCK LOGO BOOT <div class="dot"></div></div>
+        <div class="option" onclick="sel('KILL ANDROID OS')">KILL ANDROID OS <div class="dot"></div></div>
+        <div class="option active" onclick="sel('FORCE CLOSE WA')">FORCE CLOSE WA <div class="dot"></div></div>
+        <div class="option" onclick="sel('KILL IP ADDRESS')">KILL IP ADDRESS <div class="dot"></div></div>
+    </div>
+</div>
+
+<script>
+    // MATRIX BG
+    const c = document.getElementById('matrix'); const x = c.getContext('2d');
+    c.width = window.innerWidth; c.height = window.innerHeight;
+    const s = "01DEADLYBLUE"; const d = Array(Math.floor(c.width/15)).fill(1);
+    function draw() {
+        x.fillStyle = "rgba(0,0,0,0.05)"; x.fillRect(0,0,c.width,c.height);
+        x.fillStyle = "#3498db"; x.font = "15px arial";
+        d.forEach((y, i) => {
+            x.fillText(s[Math.floor(Math.random()*s.length)], i*15, y*15);
+            if(y*15 > c.height && Math.random() > 0.975) d[i] = 0; d[i]++;
+        });
+    }
+    setInterval(draw, 33);
+
+    // LOGIC MENU
+    function openM() { document.getElementById('ovl').style.display = 'flex'; }
+    function closeM() { document.getElementById('ovl').style.display = 'none'; }
+    function sel(n) {
+        document.getElementById('bug_name').innerText = n;
+        const o = document.querySelectorAll('.option');
+        o.forEach(i => i.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+        closeM();
+    }
+
+    function hit() {
+        const n = document.getElementById('num').value;
+        if(!n) return alert("NOMOR TARGETNYA MANA, KONT*L!");
+        alert("INJECTING " + document.getElementById('bug_name').innerText + "...");
+        setTimeout(() => {
+            window.location.href = `https://api.whatsapp.com/send?phone=${n}&text=҈҈҈҈҈҈҈҈҈҈҈҈҈҈ [DEADLY BLUE ATTACK]`;
+        }, 800);
+    }
+</script>
+</body>
+</html>
+
