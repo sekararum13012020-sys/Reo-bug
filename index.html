@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NEXUS NET - Multi Server v2 (Series & Episodes)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;600;900&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --bg: #020617; --accent: #8b5cf6; --glow: rgba(139, 92, 246, 0.5);
+            --nav-h: 65px; 
+            --glass: rgba(255, 255, 255, 0.03); --glass-border: rgba(255, 255, 255, 0.1);
+        }
+        html, body { height: 100%; margin: 0; padding: 0; overflow-x: hidden; background: var(--bg); }
+        * { box-sizing: border-box; }
+        body { color: #f8fafc; font-family: 'Outfit', sans-serif; display: flex; flex-direction: column; }
+
+        nav { background: #020617; padding: 0 5%; display: flex; justify-content: space-between; align-items: center; position: fixed; top: 0; width: 100%; height: var(--nav-h); z-index: 3000; border-bottom: 1px solid var(--glass-border); gap: 15px; }
+        .logo { font-size: 1.1rem; font-weight: 900; color: #fff; text-decoration: none; min-width: fit-content; }
+        .logo span { color: var(--accent); }
+        .search-container { flex-grow: 1; max-width: 400px; }
+        .search-input { width: 100%; padding: 7px 15px; border-radius: 100px; background: var(--glass); border: 1px solid var(--glass-border); color: #fff; outline: none; font-size: 13px; }
+
+        .content-wrapper { margin-top: var(--nav-h); width: 100%; flex: 1; }
+        .slider-container { position: relative; width: 100%; height: 35vh; overflow: hidden; background: #000; }
+        .slider-track { display: flex; height: 100%; transition: transform 0.6s ease; }
+        .slide { flex: 0 0 100%; height: 100%; background-size: cover; background-position: center; position: relative; }
+        .slide-overlay { position: absolute; inset: 0; background: linear-gradient(0deg, var(--bg) 0%, transparent 80%); display: flex; align-items: center; justify-content: center; }
+        .hero-title { font-size: clamp(1rem, 3vw, 1.8rem); font-weight: 900; text-align: center; padding: 0 20px; }
+
+        .category-bar { display: flex; gap: 10px; overflow-x: auto; padding: 10px 5%; background: var(--bg); position: sticky; top: var(--nav-h); z-index: 2500; border-bottom: 1px solid var(--glass-border); scrollbar-width: none; }
+        .pill { background: var(--glass); border: 1px solid var(--glass-border); padding: 6px 15px; border-radius: 100px; cursor: pointer; font-size: 11px; font-weight: 600; color: #94a3b8; white-space: nowrap; transition: 0.2s; }
+        .pill.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+        main { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; padding: 15px 5% 100px; }
+        .movie-card { background: #0f172a; border-radius: 10px; overflow: hidden; cursor: pointer; border: 1px solid var(--glass-border); transition: 0.3s; position: relative; }
+        .movie-card img { width: 100%; aspect-ratio: 2/3; object-fit: cover; }
+        .card-body { padding: 8px; }
+        .btn-play { background: var(--accent); color: white; padding: 5px; border-radius: 5px; font-weight: 800; font-size: 9px; text-align: center; margin-top: 5px; }
+
+        #playerOverlay { position: fixed; inset: 0; background: #000; z-index: 9999; display: none; flex-direction: column; height: 100vh; width: 100vw; }
+        .player-header { height: 50px; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; background: #0f172a; border-bottom: 1px solid var(--glass-border); flex-shrink: 0; }
+        .server-list { height: 55px; display: flex; gap: 8px; overflow-x: auto; padding: 10px 20px; background: #020617; scrollbar-width: none; border-bottom: 1px solid var(--glass-border); flex-shrink: 0; align-items: center; }
+        .srv-btn { padding: 6px 14px; border-radius: 6px; background: var(--glass); border: 1px solid var(--glass-border); color: #fff; font-size: 11px; cursor: pointer; white-space: nowrap; }
+        .srv-btn.active { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 10px var(--glow); }
+        .video-container { flex-grow: 1; width: 100%; position: relative; background: #000; }
+        iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+
+        @media (orientation: landscape) {
+            #playerOverlay { flex-direction: row; flex-wrap: wrap; }
+            .player-header { width: 100%; order: 1; height: 40px; }
+            .video-container { width: calc(100% - 130px); height: calc(100vh - 40px); order: 2; }
+            .server-list { width: 130px; height: calc(100vh - 40px); flex-direction: column; overflow-y: auto; overflow-x: hidden; border-bottom: none; border-left: 1px solid var(--glass-border); padding: 10px 8px; order: 3; justify-content: flex-start; gap: 10px; }
+            .srv-btn { width: 100%; text-align: center; font-size: 10px; padding: 10px 5px; }
+        }
+        
+        #adminTrigger { position: relative; width: 32px; height: 32px; background: var(--accent); border-radius: 8px; z-index: 3500; display: flex; align-items: center; justify-content: center; opacity: 1; font-size: 10px; font-weight: 900; cursor: pointer; box-shadow: 0 0 15px var(--glow); border: 1px solid rgba(255,255,255,0.2); flex-shrink: 0; transition: 0.3s; }
+        .admin-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 5000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(8px); padding: 20px; }
+        .admin-box { background: #0f172a; padding: 20px; border-radius: 15px; border: 1px solid var(--accent); width: 100%; max-width: 320px; max-height: 90vh; overflow-y: auto; position: relative; }
+        .admin-input, .admin-select { width: 100%; padding: 10px; background: #1e293b; border: 1px solid var(--glass-border); border-radius: 8px; color: #fff; margin-bottom: 8px; outline: none; font-size: 13px; }
+        .manage-item { display: flex; justify-content: space-between; align-items: center; background: var(--glass); padding: 8px; border-radius: 8px; margin-bottom: 5px; font-size: 11px; border: 1px solid var(--glass-border); gap: 5px; }
+        .manage-item span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+        .btn-edit { background:#eab308; border:none; padding:6px 10px; border-radius:4px; color:white; cursor:pointer; font-weight:bold; }
+        .btn-del { background:#ef4444; border:none; padding:6px 10px; border-radius:4px; color:white; cursor:pointer; font-weight:bold; }
+        .ep-input-group { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px dashed var(--glass-border); }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="#" class="logo" onclick="location.reload()">NEXUS<span>NET</span></a>
+    <div class="search-container">
+        <input type="text" id="searchInput" class="search-input" placeholder="Cari film..." onkeyup="handleSearch(event)">
+    </div>
+    <div id="adminTrigger" onclick="openAdmin()">ADM</div>
+</nav>
+
+<div class="content-wrapper">
+    <div class="slider-container" id="heroSec"><div class="slider-track" id="track"></div></div>
+    <div class="category-bar" id="genres">
+        <div class="pill active" id="pillPopular" onclick="getMovies('movie/popular', this)">⚡ Populer</div>
+    </div>
+    <main id="main"></main>
+</div>
+
+<div id="playerOverlay">
+    <div class="player-header">
+        <span id="playerTitle" style="font-size: 13px; font-weight: 600;">Memutar...</span>
+        <div onclick="closeVideo()" style="cursor:pointer; font-weight:900; color:#ef4444; font-size:20px; padding: 5px;">✕</div>
+    </div>
+    <div class="server-list" id="serverBox"></div>
+    <div class="video-container">
+        <iframe id="videoIframe" allowfullscreen allow="autoplay; encrypted-media"></iframe>
+    </div>
+</div>
+
+<div id="modalLogin" class="admin-modal">
+    <div class="admin-box">
+        <h4>ADMIN LOGIN</h4>
+        <input type="password" id="passInput" class="admin-input" placeholder="Password">
+        <button class="pill active" style="width:100%; border:none; padding:12px;" onclick="checkPass()">LOGIN</button>
+        <p onclick="closeAdmin()" style="margin-top:15px; text-align:center; font-size:11px; color:#94a3b8; cursor:pointer">BATAL</p>
+    </div>
+</div>
+
+<div id="modalPanel" class="admin-modal">
+    <div class="admin-box">
+        <h4 id="panelTitle">TAMBAH KONTEN</h4>
+        <input type="hidden" id="editKey">
+        <select id="addType" class="admin-select" onchange="toggleEpField()">
+            <option value="movie">Movie (Satu Link)</option>
+            <option value="series">Series (Banyak Episode)</option>
+        </select>
+        <input type="text" id="addTitle" class="admin-input" placeholder="Judul">
+        <input type="text" id="addPoster" class="admin-input" placeholder="URL Poster">
+        <select id="addCategory" class="admin-select">
+            <option value="Indonesia">Film Indonesia</option>
+            <option value="Anime">Anime</option>
+            <option value="Kartun">Kartun</option>
+            <option value="Drakor">Drakor</option>
+            <option value="Barat">Film Barat</option>
+        </select>
+        
+        <div id="movieField">
+            <input type="text" id="addUrl" class="admin-input" placeholder="Link Embed Movie">
+        </div>
+
+        <div id="seriesField" style="display:none;">
+            <div id="episodeContainer"></div>
+            <button class="pill" style="width:100%; margin-bottom:10px; font-size:10px; padding:8px" onclick="addEpInput()">+ Tambah Episode</button>
+        </div>
+
+        <button id="btnSave" class="pill active" style="width:100%; border:none; padding:12px;" onclick="saveMovie()">SIMPAN DATA</button>
+        <h5 style="margin: 15px 0 10px; font-size: 12px; color: var(--accent);">DAFTAR KONTEN:</h5>
+        <div id="adminMovieList"></div>
+        <button onclick="logoutAdmin()" style="width:100%; color:#ef4444; background:none; border:1px solid #ef4444; border-radius:8px; padding:8px; font-size:10px; cursor:pointer; margin-top:10px">LOGOUT</button>
+        <p onclick="closeAdmin()" style="margin-top:10px; text-align:center; font-size:10px; color:#94a3b8; cursor:pointer">TUTUP PANEL</p>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<script>
+    const firebaseConfig = { databaseURL: "https://film-3f570-default-rtdb.asia-southeast1.firebasedatabase.app/" };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const KEY = '844dba0bfd8f3a4f3799f6130ef9e335';
+    const BASE = 'https://api.themoviedb.org/3';
+    const IMG = 'https://image.tmdb.org/t/p/original';
+    const POSTER = 'https://image.tmdb.org/t/p/w500';
+    let cloudData = {};
+
+    db.ref('movies').on('value', (snap) => { cloudData = snap.val() || {}; renderAdminList(); renderAllCategories(); });
+
+    const megaGenres = [{id: 28, name: "Action"}, {id: 16, name: "Animation"}, {id: 35, name: "Comedy"}, {id: 27, name: "Horror"}, {id: 10749, name: "Romance"}, {id: 878, name: "Sci-Fi"}, {id: 18, name: "Drama"}, {id: 53, name: "Thriller"}, {id: 12, name: "Adventure"}];
+
+    async function init() {
+        try {
+            const res = await fetch(`${BASE}/movie/now_playing?api_key=${KEY}`);
+            const data = await res.json();
+            const track = document.getElementById('track');
+            data.results.slice(0, 5).forEach(m => {
+                const s = document.createElement('div'); s.className = 'slide';
+                s.style.backgroundImage = `url(${IMG + (m.backdrop_path || m.poster_path)})`;
+                s.innerHTML = `<div class="slide-overlay"><h1 class="hero-title">${m.title}</h1></div>`;
+                track.appendChild(s);
+            });
+            let cur = 0; setInterval(() => { cur = (cur + 1) % 5; if(track) track.style.transform = `translateX(-${cur * 100}%)`; }, 5000);
+        } catch(e) {}
+        renderAllCategories();
+        getMovies('movie/popular', document.getElementById('pillPopular'));
+    }
+
+    function renderAllCategories() {
+        const genBox = document.getElementById('genres');
+        const popularPill = document.getElementById('pillPopular');
+        if(!genBox || !popularPill) return;
+        genBox.innerHTML = ''; genBox.appendChild(popularPill);
+        const categories = [...new Set(Object.values(cloudData).map(m => m.category || "Indonesia"))];
+        categories.sort().forEach(cat => {
+            const p = document.createElement('div'); p.className = 'pill'; p.style.color = '#4ade80';
+            p.innerText = `📁 ${cat}`; p.onclick = (e) => showLocal(cat, e.target); genBox.appendChild(p);
+        });
+        megaGenres.forEach(g => {
+            const p = document.createElement('div'); p.className = 'pill'; p.innerText = g.name;
+            p.onclick = (e) => getMovies(`discover/movie?with_genres=${g.id}`, e.target); genBox.appendChild(p);
+        });
+    }
+
+    async function getMovies(path, el) {
+        if(el) { document.querySelectorAll('.pill').forEach(p => p.classList.remove('active')); el.classList.add('active'); }
+        const main = document.getElementById('main'); main.innerHTML = 'Memuat...';
+        document.getElementById('heroSec').style.display = "block";
+        try {
+            const res = await fetch(`${BASE}/${path}${path.includes('?') ? '&' : '?'}api_key=${KEY}`);
+            const data = await res.json(); main.innerHTML = '';
+            data.results.forEach(m => {
+                if(!m.poster_path) return;
+                const c = document.createElement('div'); c.className = 'movie-card';
+                c.onclick = () => openPlayer(m.id, m.title, 'api');
+                c.innerHTML = `<img src="${POSTER + m.poster_path}"><div class="card-body"><div style="font-size:10px; font-weight:900; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">${m.title}</div><div class="btn-play">▶ PLAY</div></div>`;
+                main.appendChild(c);
+            });
+        } catch(e) {}
+    }
+
+    function showLocal(category, el) {
+        if(el) { document.querySelectorAll('.pill').forEach(p => p.classList.remove('active')); el.classList.add('active'); }
+        const main = document.getElementById('main'); main.innerHTML = '';
+        Object.values(cloudData).filter(m => (m.category || "Indonesia") === category).reverse().forEach(m => {
+            const c = document.createElement('div'); c.className = 'movie-card';
+            c.onclick = () => {
+                if(m.type === 'series') openSeriesPlayer(m);
+                else openPlayer(m.url, m.title, 'cloud');
+            };
+            c.innerHTML = `<img src="${m.poster}"><div class="card-body"><div style="font-size:10px; font-weight:900">${m.title}</div><div class="btn-play">▶ ${m.type === 'series' ? 'SERIES' : 'PLAY'}</div></div>`;
+            main.appendChild(c);
+        });
+    }
+
+    // Player Movie Biasa & API
+    function openPlayer(idOrUrl, title, type) {
+        const overlay = document.getElementById('playerOverlay');
+        const srvBox = document.getElementById('serverBox');
+        const iframe = document.getElementById('videoIframe');
+        document.getElementById('playerTitle').innerText = title;
+        overlay.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        srvBox.innerHTML = '';
+        if(type === 'api') {
+            const servers = [
+                { n: 'Server CC', u: `https://vidsrc.cc/v2/embed/movie/${idOrUrl}` },
+                { n: 'Server TO', u: `https://vidsrc.to/embed/movie/${idOrUrl}` },
+                { n: 'Server XYZ', u: `https://vidsrc.xyz/embed/movie/${idOrUrl}` },
+                { n: 'Server SU', u: `https://embed.su/embed/movie/${idOrUrl}` }
+            ];
+            servers.forEach((srv, i) => {
+                const b = document.createElement('div'); b.className = `srv-btn ${i === 0 ? 'active' : ''}`;
+                b.innerText = srv.n; b.onclick = (e) => {
+                    document.querySelectorAll('.srv-btn').forEach(btn => btn.classList.remove('active'));
+                    e.target.classList.add('active'); iframe.src = srv.u;
+                };
+                srvBox.appendChild(b);
+            });
+            iframe.src = servers[0].u;
+        } else {
+            srvBox.innerHTML = '<span style="font-size:11px; color:#4ade80;">✓ Server Cloud Aktif</span>';
+            iframe.src = idOrUrl;
+        }
+    }
+
+    // Player Khusus Series
+    function openSeriesPlayer(data) {
+        const overlay = document.getElementById('playerOverlay');
+        const srvBox = document.getElementById('serverBox');
+        const iframe = document.getElementById('videoIframe');
+        document.getElementById('playerTitle').innerText = data.title;
+        overlay.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        srvBox.innerHTML = '';
+
+        data.episodes.forEach((url, i) => {
+            const b = document.createElement('div');
+            b.className = `srv-btn ${i === 0 ? 'active' : ''}`;
+            b.innerText = `EPS ${i + 1}`;
+            b.onclick = (e) => {
+                document.querySelectorAll('.srv-btn').forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+                iframe.src = url;
+            };
+            srvBox.appendChild(b);
+        });
+        iframe.src = data.episodes[0];
+    }
+
+    function closeVideo() { document.getElementById('playerOverlay').style.display='none'; document.getElementById('videoIframe').src=''; document.body.style.overflow = 'auto'; }
+
+    // Logic Admin Episode
+    function toggleEpField() {
+        const type = document.getElementById('addType').value;
+        document.getElementById('movieField').style.display = type === 'movie' ? 'block' : 'none';
+        document.getElementById('seriesField').style.display = type === 'series' ? 'block' : 'none';
+        if(type === 'series' && document.getElementById('episodeContainer').innerHTML === "") addEpInput();
+    }
+
+    function addEpInput(val = "") {
+        const container = document.getElementById('episodeContainer');
+        const index = container.children.length + 1;
+        const div = document.createElement('div');
+        div.className = "ep-input-group";
+        div.innerHTML = `<label style="font-size:10px; color:var(--accent)">Episode ${index}</label>
+                         <input type="text" class="admin-input ep-link" value="${val}" placeholder="Link Embed Episode ${index}">`;
+        container.appendChild(div);
+    }
+
+    function saveMovie() {
+        const type = document.getElementById('addType').value;
+        const t = document.getElementById('addTitle').value;
+        const p = document.getElementById('addPoster').value;
+        const c = document.getElementById('addCategory').value;
+        const k = document.getElementById('editKey').value;
+        
+        if(!t) return alert("Judul wajib diisi!");
+
+        let obj = { title: t, poster: p || 'https://via.placeholder.com/500x750', category: c, type: type };
+
+        if(type === 'movie') {
+            obj.url = document.getElementById('addUrl').value;
+            if(!obj.url) return alert("Link movie wajib diisi!");
+        } else {
+            const eps = Array.from(document.querySelectorAll('.ep-link')).map(input => input.value).filter(v => v !== "");
+            if(eps.length === 0) return alert("Minimal isi 1 episode!");
+            obj.episodes = eps;
+        }
+
+        if(k) db.ref('movies/'+k).update(obj).then(() => { resetForm(); alert("Updated!"); });
+        else db.ref('movies').push(obj).then(() => { resetForm(); alert("Saved!"); });
+    }
+
+    function editMovie(key) {
+        const m = cloudData[key];
+        resetForm();
+        document.getElementById('panelTitle').innerText = "EDIT KONTEN";
+        document.getElementById('editKey').value = key;
+        document.getElementById('addType').value = m.type || 'movie';
+        document.getElementById('addTitle').value = m.title;
+        document.getElementById('addPoster').value = m.poster;
+        document.getElementById('addCategory').value = m.category || "Indonesia";
+        
+        toggleEpField();
+        if(m.type === 'series') {
+            document.getElementById('episodeContainer').innerHTML = "";
+            m.episodes.forEach(url => addEpInput(url));
+        } else {
+            document.getElementById('addUrl').value = m.url || "";
+        }
+        
+        document.getElementById('btnSave').innerText = "UPDATE DATA";
+        document.getElementById('modalPanel').scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function renderAdminList() {
+        const listDiv = document.getElementById('adminMovieList'); if(!listDiv) return; listDiv.innerHTML = '';
+        Object.keys(cloudData).reverse().forEach(key => {
+            const m = cloudData[key];
+            const item = document.createElement('div'); item.className = 'manage-item';
+            item.innerHTML = `<span>[${m.type === 'series' ? 'SERIES' : 'MOVIE'}] ${m.title}</span>
+                             <div><button class="btn-edit" onclick="editMovie('${key}')">E</button>
+                             <button class="btn-del" onclick="deleteMovie('${key}')">X</button></div>`;
+            listDiv.appendChild(item);
+        });
+    }
+
+    function deleteMovie(key) { if(confirm("Hapus?")) db.ref('movies/' + key).remove(); }
+    function resetForm() { 
+        document.getElementById('panelTitle').innerText = "TAMBAH KONTEN"; 
+        document.getElementById('editKey').value = ""; 
+        document.getElementById('addTitle').value = ""; 
+        document.getElementById('addPoster').value = ""; 
+        document.getElementById('addUrl').value = "";
+        document.getElementById('episodeContainer').innerHTML = "";
+        document.getElementById('btnSave').innerText = "SIMPAN DATA"; 
+    }
+    
+    function openAdmin() { if(localStorage.getItem('is_admin') === 'true') document.getElementById('modalPanel').style.display='flex'; else document.getElementById('modalLogin').style.display='flex'; }
+    function checkPass() { if(document.getElementById('passInput').value === "reo345") { localStorage.setItem('is_admin', 'true'); location.reload(); } else alert("Salah!"); }
+    function logoutAdmin() { localStorage.removeItem('is_admin'); location.reload(); }
+    function closeAdmin() { document.querySelectorAll('.admin-modal').forEach(m => m.style.display='none'); resetForm(); }
+
+    async function handleSearch(e) {
+        const query = e.target.value.toLowerCase();
+        if(query === "") { getMovies('movie/popular', document.getElementById('pillPopular')); return; }
+        if(e.key === 'Enter' || query.length > 2) {
+            document.getElementById('heroSec').style.display = "none";
+            const main = document.getElementById('main'); main.innerHTML = '';
+            Object.values(cloudData).filter(m => m.title.toLowerCase().includes(query)).forEach(m => {
+                const c = document.createElement('div'); c.className = 'movie-card'; c.style.borderColor = "#4ade80";
+                c.onclick = () => { if(m.type === 'series') openSeriesPlayer(m); else openPlayer(m.url, m.title, 'cloud'); };
+                c.innerHTML = `<img src="${m.poster}"><div class="card-body"><div style="font-size:10px; font-weight:900">${m.title}</div><div class="btn-play" style="background:#4ade80">▶ ${m.type === 'series' ? 'SERIES' : 'LOKAL'}</div></div>`;
+                main.appendChild(c);
+            });
+            try {
+                const res = await fetch(`${BASE}/search/movie?api_key=${KEY}&query=${query}`);
+                const data = await res.json();
+                data.results.forEach(m => {
+                    if(!m.poster_path) return;
+                    const c = document.createElement('div'); c.className = 'movie-card';
+                    c.onclick = () => openPlayer(m.id, m.title, 'api');
+                    c.innerHTML = `<img src="${POSTER + m.poster_path}"><div class="card-body"><div style="font-size:10px; font-weight:900; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">${m.title}</div><div class="btn-play">▶ PLAY</div></div>`;
+                    main.appendChild(c);
+                });
+            } catch(e) {}
+        }
+    }
+
+    init();
+</script>
+</body>
+</html>
