@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexus Box</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { primary: '#2563eb', success: '#16a34a' }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans">
+
+<header class="bg-white shadow-sm sticky top-0 z-40">
+  <div class="container mx-auto px-4 py-4 flex justify-between items-center max-w-4xl">
+    <h1 class="text-xl font-bold flex items-center gap-2">
+      <i class="fa fa-cube text-primary"></i> Nexus Box
+    </h1>
+    <button onclick="bukaPanel()" class="bg-primary hover:bg-primary/90 text-white px-5 py-2 rounded-lg transition">
+      <i class="fa fa-upload mr-1"></i> Unggah
+    </button>
+  </div>
+</header>
+
+<main class="container mx-auto px-4 py-6 max-w-4xl">
+  <h2 class="text-xl font-semibold mb-5">Koleksi Aplikasi</h2>
+  <div id="kosong" class="text-center py-20 text-gray-500 hidden">
+    <i class="fa fa-cloud-upload text-5xl mb-4"></i>
+    <p>Belum ada aplikasi, silakan unggah dulu</p>
+  </div>
+  <div id="daftar" class="space-y-4"></div>
+</main>
+
+<!-- Panel Detail -->
+<div id="panelDetail" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center p-4 z-50">
+  <div class="bg-white rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-xl">
+    <div class="flex justify-between items-center p-4 border-b">
+      <h3 class="text-lg font-bold" id="judulDetail"></h3>
+      <button onclick="tutupPanelDetail()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-xl">&times;</button>
+    </div>
+    <div class="p-5 space-y-4" id="isiDetail"></div>
+  </div>
+</div>
+
+<!-- Panel Unggah -->
+<div id="panelUnggah" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center p-4 z-50">
+  <div class="bg-white rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-xl">
+    <div class="flex justify-between items-center p-4 border-b">
+      <h3 class="text-lg font-bold">Tambah Aplikasi Baru</h3>
+      <button onclick="tutupPanel()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-xl">&times;</button>
+    </div>
+    <form id="formUnggah" class="p-5 space-y-4">
+      <input type="text" name="nama" required class="w-full border p-2.5 rounded-lg" placeholder="Nama Aplikasi">
+      <input type="text" name="dev" required class="w-full border p-2.5 rounded-lg" placeholder="Pengembang">
+      <input type="text" name="versi" required class="w-full border p-2.5 rounded-lg" placeholder="Versi">
+      <textarea name="deskripsi" required rows="3" class="w-full border p-2.5 rounded-lg" placeholder="Deskripsi"></textarea>
+      <input type="file" name="ikon" accept="image/*" required class="w-full">
+      <input type="file" name="preview" accept="image/*" multiple class="w-full">
+      <input type="file" name="file" accept=".apk,.zip" required class="w-full">
+      <button type="submit" class="w-full bg-success text-white p-2.5 rounded-lg font-medium hover:bg-success/90">
+        Simpan & Unggah
+      </button>
+    </form>
+  </div>
+</div>
+
+<script>
+function bukaPanel() {
+  document.getElementById("panelUnggah").classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+}
+function tutupPanel() {
+  document.getElementById("panelUnggah").classList.add("hidden");
+  document.body.style.overflow = "auto";
+}
+function bukaPanelDetail(app) {
+  document.getElementById("judulDetail").textContent = app.nama;
+  document.getElementById("isiDetail").innerHTML = `
+    <div class="text-center">
+      <img src="${app.url_ikon}" class="w-24 h-24 rounded-lg mx-auto mb-4 object-cover">
+      <p class="text-gray-600">Pengembang: ${app.dev}</p>
+      <p class="text-gray-600">Versi: ${app.versi} • Ukuran: ${app.ukuran}</p>
+      <p class="text-gray-700 mt-3 text-left">${app.deskripsi}</p>
+      <a href="${app.url_file}" target="_blank" download class="block w-full bg-primary text-white py-3 rounded-lg mt-5 font-medium text-center">
+        <i class="fa fa-download mr-2"></i> Unduh APK
+      </a>
+    </div>
+  `;
+  document.getElementById("panelDetail").classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+}
+function tutupPanelDetail() {
+  document.getElementById("panelDetail").classList.add("hidden");
+  document.body.style.overflow = "auto";
+}
+
+// Koneksi Supabase
+const sb = window.supabase.createClient(
+  "https://polfqvnoibctctkmzkap.supabase.co",
+  "sb_publishable_Nm47BJfydkCF3OP2iv4hUw_Jjjt9igG"
+);
+const BUCKET = "nexus-box";
+
+// ✅ PERBAIKAN: Bersihkan daftar dulu sebelum isi baru
+async function muatData() {
+  const daftarEl = document.getElementById("daftar");
+  const kosongEl = document.getElementById("kosong");
+  daftarEl.innerHTML = ""; // Hapus semua dulu agar tidak ganda
+
+  const { data, error } = await sb.from("aplikasi").select("*").order("id", { ascending: false });
+
+  if (error) {
+    console.error("Gagal ambil data:", error);
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    kosongEl.classList.remove("hidden");
+    return;
+  }
+
+  kosongEl.classList.add("hidden");
+  data.forEach(app => {
+    daftarEl.innerHTML += `
+      <div onclick='bukaPanelDetail(${JSON.stringify(app).replace(/"/g,'&quot;')})' class="bg-white p-4 rounded-xl shadow-sm border flex items-center gap-4 cursor-pointer hover:shadow-md transition-shadow">
+        <img src="${app.url_ikon}" class="w-16 h-16 rounded-lg object-cover">
+        <div>
+          <h3 class="font-bold text-lg">${app.nama}</h3>
+          <p class="text-gray-500">${app.dev} • v${app.versi}</p>
+        </div>
+      </div>
+    `;
+  });
+}
+
+// Proses unggah
+document.getElementById("formUnggah").addEventListener("submit", async e => {
+  e.preventDefault();
+  const form = e.target;
+  const id = Date.now();
+  const ukuran = (form.file.files[0].size / 1024 / 1024).toFixed(2) + " MB";
+
+  const unggah = async (path, file) => {
+    const { data, error } = await sb.storage.from(BUCKET).upload(path, file, { cacheControl: "public, max-age=31536000" });
+    if (error) throw error;
+    return sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+  };
+
+  try {
+    const ikon = await unggah(`ikon/${id}_${form.ikon.files[0].name}`, form.ikon.files[0]);
+    const file = await unggah(`file/${id}_${form.file.files[0].name}`, form.file.files[0]);
+    const preview = [];
+    for (let img of form.preview.files) preview.push(await unggah(`preview/${id}_${img.name}`, img));
+
+    await sb.from("aplikasi").insert({
+      id, nama: form.nama.value, dev: form.dev.value, versi: form.versi.value, deskripsi: form.deskripsi.value,
+      ukuran, url_ikon: ikon, url_file: file, url_preview: preview, rating: 0, jumlah_unduh: 0
+    });
+
+    alert("✅ Berhasil diunggah!");
+    tutupPanel();
+    form.reset();
+    muatData();
+  } catch (err) {
+    alert("❌ Gagal: " + err.message);
+  }
+});
+
+window.onload = muatData;
+</script>
+
+</body>
+</html>
